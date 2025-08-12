@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ᴅᴀʀᴋ ʏᴏɴɢ — Assistant</title>
+<style>
+  /* Reset & layout */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html,body { height: 100%; }
+  body {
+    background: linear-gradient(135deg,#060615,#0f1230 60%);
+    color: #e9e6ff;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding: 24px;
+  }
+
+  /* Container */
+  .app {
+    width: min(920px, 96%);
+    max-width: 920px;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+    align-items:stretch;
+  }
+
+  /* Left panel - name + controls */
+  .panel {
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    border-radius: 18px;
+    padding: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+
+  .brand {
+    display:flex; flex-direction:column; gap:8px;
+  }
+
+  /* Bot name (big, animated) */
+  .bot-display {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: none;
+  }
+  .bot-display .name {
+    display:inline-block;
+    background: linear-gradient(270deg,#ff00ff,#9b4dff,#00e0ff,#ff66cc);
+    background-size: 600% 600%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: gradientMove 6s linear infinite, pulseGlow 1.6s ease-in-out infinite;
+    text-shadow: 0 0 12px rgba(155,77,255,0.35);
+  }
+
+  @keyframes gradientMove {
+    0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}
+  }
+  @keyframes pulseGlow {
+    0%{filter:drop-shadow(0 0 8px rgba(155,77,255,0.15))}50%{filter:drop-shadow(0 0 22px rgba(155,77,255,0.30))}100%{filter:drop-shadow(0 0 8px rgba(155,77,255,0.15))}
+  }
+
+  .sub {
+    color:#bfb8ff;
+    font-size:13px;
+  }
+
+  .controls { display:flex; gap:8px; margin-top:6px; }
+  .btn {
+    background: linear-gradient(90deg,#6a53ff,#a586ff);
+    border:none; color:white; padding:8px 12px; border-radius:10px; cursor:pointer;
+    font-weight:700; box-shadow: 0 6px 18px rgba(106,83,255,0.18);
+  }
+  .btn.ghost {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.06);
+    color:#ddd;
+    box-shadow:none;
+  }
+
+  /* Right panel - chat */
+  .chat-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius: 18px;
+    padding: 18px;
+    display:flex;
+    flex-direction:column;
+    height: 75vh;
+    min-height: 520px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  }
+
+  .header {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    margin-bottom:10px;
+  }
+  .header .title { font-weight:800; font-size:18px; color:#f2ecff; }
+  .header .small { color:#bfb8ff; font-size:13px; }
+
+  .chat-box {
+    flex:1; overflow:auto; padding-right:10px; display:flex; flex-direction:column; gap:10px;
+    scroll-behavior: smooth;
+  }
+  .chat-box::-webkit-scrollbar{ width:10px }
+  .chat-box::-webkit-scrollbar-thumb{ background: linear-gradient(#6a53ff,#8c79ff); border-radius:20px }
+
+  .message {
+    max-width:78%;
+    padding:12px 16px;
+    border-radius:14px;
+    font-size:15px;
+    line-height:1.4;
+    word-wrap:break-word;
+    display:inline-block;
+    animation: msgIn .28s ease;
+  }
+  @keyframes msgIn { from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none} }
+
+  .message.user {
+    align-self:flex-end;
+    background: linear-gradient(135deg, rgba(0,255,255,0.12), rgba(0,255,255,0.05));
+    color:#03121a; font-weight:700;
+    box-shadow: 0 8px 26px rgba(0,255,255,0.04);
+  }
+  .message.bot {
+    align-self:flex-start;
+    background: linear-gradient(135deg, rgba(155,77,255,0.10), rgba(155,77,255,0.03));
+    color:#f3eefb; font-style:italic;
+    box-shadow: 0 10px 30px rgba(106,83,255,0.06);
+  }
+
+  /* creator name highlight */
+  .creator-name {
+    font-weight:800;
+    background: linear-gradient(270deg,#ff00ff,#c46dff,#4de0ff);
+    background-size:600% 600%;
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    animation: gradientMove 5s linear infinite, pulseGlow 1.6s ease-in-out infinite;
+  }
+
+  /* input area */
+  .input-area {
+    margin-top:12px;
+    display:flex; gap:10px; align-items:center;
+  }
+  .input {
+    flex:1;
+    background: rgba(255,255,255,0.02);
+    border-radius:12px;
+    padding:12px 14px;
+    color:#e6e2ff;
+    border:1px solid rgba(255,255,255,0.03);
+    outline:none;
+    font-weight:600;
+  }
+  .input::placeholder{ color:#bfb8ff66; font-weight:500; }
+  .send-btn{ padding:10px 14px; border-radius:12px; border:none; cursor:pointer; font-weight:800; background:linear-gradient(90deg,#00d4ff,#6a53ff); color:white; box-shadow:0 8px 24px rgba(0,212,255,0.08) }
+
+  /* small helper */
+  .muted { color:#bfb8ff; font-size:13px }
+
+  /* responsive */
+  @media (max-width:880px){
+    .app { grid-template-columns: 1fr; }
+    .panel { order:2 }
+    .chat-card { order:1 }
+    .chat-card{ height: 78vh; min-height:520px }
+  }
+</style>
+</head>
+<body>
+  <div class="app">
+    <!-- left panel -->
+    <div class="panel">
+      <div class="brand">
+        <div class="bot-display">
+          <div style="font-size:12px;color:#cfc7ff;font-weight:700">ASSISTANT</div>
+          <div class="name bot-display" style="margin-top:6px;">
+            <span class="name bot-title" aria-hidden="true"><span class="name-inner"></span></span>
+            <div style="margin-top:6px;font-size:14px" class="sub">Le bot stylé — parle & lit à voix haute</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="muted">Actions</div>
+        <div class="controls" style="margin-top:8px;">
+          <button class="btn" id="btnVoiceToggle">🔊 Voix: ON</button>
+          <button class="btn ghost" id="btnClear">Effacer historique</button>
+        </div>
+      </div>
+
+      <div style="margin-top:auto;">
+        <div class="muted">Infos</div>
+        <div style="margin-top:8px;color:#dcd6ff;font-size:14px">
+          Nom du bot: <strong class="creator-name" id="botNameRight">ᴅᴀʀᴋ ʏᴏɴɢ</strong><br>
+          Créateur: <span class="creator-name" id="creatorNameRight">ᴅᴀʀᴋ ʏᴏɴɢ</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- right (chat) -->
+    <div class="chat-card">
+      <div class="header">
+        <div>
+          <div class="title">Chat — ᴅᴀʀᴋ ʏᴏɴɢ</div>
+          <div class="small">Tape : "Qui t'a créé ?" pour la réponse spéciale.</div>
+        </div>
+        <div class="small" id="status">Prêt</div>
+      </div>
+
+      <div class="chat-box" id="chat"></div>
+
+      <div class="input-area">
+        <input id="userInput" class="input" placeholder="Pose ta question..." autocomplete="off" />
+        <button id="sendBtn" class="send-btn">➤</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ---------- Configuration ---------- */
+const apiKey = 'AIzaSyAaZkM5zG11lrotfZfkKyts-TbKheHr05o'; // ta clé API
+const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+const BOT_NAME = 'ᴅᴀʀᴋ ʏᴏɴɢ';
+const CREATOR = 'ᴅᴀʀᴋ ʏᴏɴɢ';
+
+/* ---------- UI refs ---------- */
+const chatEl = document.getElementById('chat');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const btnClear = document.getElementById('btnClear');
+const btnVoiceToggle = document.getElementById('btnVoiceToggle');
+const statusEl = document.getElementById('status');
+document.querySelector('.name-inner').textContent = BOT_NAME;
+document.getElementById('botNameRight').textContent = BOT_NAME;
+document.getElementById('creatorNameRight').textContent = CREATOR;
+
+/* ---------- State ---------- */
+let chatHistory = JSON.parse(localStorage.getItem('kakashiChat_v2')) || [];
+let voiceEnabled = true;
+
+/* ---------- Speech ---------- */
+function speak(text) {
+  if (!voiceEnabled) return;
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'fr-FR';
+  u.rate = 1;
+  u.pitch = 1;
+  speechSynthesis.speak(u);
+}
+
+/* ---------- Helpers ---------- */
+function highlightCreator(text) {
+  // échappe HTML simple
+  const esc = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  // remplace occurrences exactes du nom par un span stylé (insensible à la casse approximative)
+  const re = new RegExp(CREATOR.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+  return esc.replace(re, `<span class="creator-name">${CREATOR}</span>`);
+}
+
+function appendMessage(text, who='bot', speakIt=true) {
+  const msg = document.createElement('div');
+  msg.className = `message ${who}`;
+  msg.innerHTML = highlightCreator(text);
+  chatEl.appendChild(msg);
+  chatEl.scrollTop = chatEl.scrollHeight;
+  if (who === 'bot' && speakIt) {
+    // speak plain text (without HTML tags)
+    const plain = text.replace(/<\/?[^>]+(>|$)/g, "");
+    // if mentioning creator, add a stronger visual pulse
+    if (plain.includes(CREATOR)) {
+      // short bounce effect
+      msg.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.02)' }, { transform: 'scale(1)' }], { duration: 700 });
+    }
+    speak(plain);
+  }
+}
+
+/* ---------- Local history ---------- */
+function saveMessage(text, who) {
+  chatHistory.push({ text, who, time: Date.now() });
+  localStorage.setItem('kakashiChat_v2', JSON.stringify(chatHistory));
+}
+
+/* ---------- Load initial ---------- */
+function loadChatHistory() {
+  if (chatHistory.length === 0) {
+    const welcome = `Yo ! Je suis ${BOT_NAME}. Pose-moi une question. Et si tu demandes "Qui t'a créé ?", je répondrai directement.`;
+    appendMessage(welcome, 'bot', true);
+    saveMessage(welcome,'bot');
+  } else {
+    chatHistory.forEach(m => appendMessage(m.text, m.who, false));
+  }
+}
+loadChatHistory();
+
+/* ---------- Events ---------- */
+sendBtn.addEventListener('click', onSend);
+userInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') onSend(); });
+btnClear.addEventListener('click', () => {
+  localStorage.removeItem('kakashiChat_v2');
+  chatHistory = [];
+  chatEl.innerHTML = '';
+  loadChatHistory();
+});
+btnVoiceToggle.addEventListener('click', () => {
+  voiceEnabled = !voiceEnabled;
+  btnVoiceToggle.textContent = voiceEnabled ? '🔊 Voix: ON' : '🔈 Voix: OFF';
+});
+
+/* ---------- Fonction askGemini ---------- */
+async function askGemini(prompt) {
+  const body = {
+    contents: [{ parts: [{ text: prompt }] }]
+  };
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+      return data.candidates[0].content.parts[0].text;
+    } else {
+      return "Je n'ai pas pu comprendre la réponse.";
+    }
+  } catch (err) {
+    console.error(err);
+    return "Erreur de connexion à l'API.";
+  }
+}
+
+/* ---------- Core send logic ---------- */
+async function onSend() {
+  const prompt = userInput.value.trim();
+  if (!prompt) return;
+  userInput.value = '';
+  const userText = `👤 Toi: ${prompt}`;
+  appendMessage(userText, 'user', false);
+  saveMessage(userText,'user');
+
+  // Détection de la question spéciale "Qui t'a créé ?"
+  const low = prompt.toLowerCase();
+  const asksCreator = (low.includes('qui t') && low.includes('cré')) || low.includes("qui t'a créé");
+
+  if (asksCreator) {
+    const reply = `🤖 ${BOT_NAME}: C’est ${CREATOR} mon créateur.`;
+    appendMessage(reply, 'bot', true);
+    saveMessage(reply,'bot');
+    return;
+  }
+
+  statusEl.textContent = 'Génération...';
+  const fullPrompt = `Réponds de façon concise, avec un ton insolent mais utile. Rappelle que ton créateur est ${CREATOR}. Question: ${prompt}`;
+  try {
+    const answer = await askGemini(fullPrompt);
+    const botReply = `🤖 ${BOT_NAME}: ${answer}`;
+    appendMessage(botReply, 'bot', true);
+    saveMessage(botReply,'bot');
+    statusEl.textContent = 'Prêt';
+  } catch (err) {
+    const errTxt = `🤖 ${BOT_NAME}: Oups, problème technique avec l'API.`;
+    appendMessage(errTxt,'bot',true);
+    saveMessage(errTxt,'bot');
+    statusEl.textContent = 'Erreur API';
+  }
+}
+</script>
+</body>
+  </html>
